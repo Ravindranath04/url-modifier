@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import App from '../App';
 
 const Index: React.FC = () => {
-  return <Navigate to="/" replace />;
+  return <App />;
 };
 
 export default Index;
