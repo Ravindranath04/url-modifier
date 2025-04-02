@@ -4,7 +4,30 @@ import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { urlSecurityService, SecurityCheckResult } from "@/services/urlSecurityService";
 
-export type UrlCategory = "News" | "Social Media" | "Shopping" | "Tech" | "Entertainment" | "Education" | "Other";
+export type UrlCategory = 
+  | "News" 
+  | "Social Media" 
+  | "Shopping" 
+  | "Tech" 
+  | "Entertainment" 
+  | "Education" 
+  | "Business" 
+  | "Travel" 
+  | "Health" 
+  | "Government" 
+  | "Finance" 
+  | "Sports" 
+  | "Other";
+
+export type UrlLocation = 
+  | "North America" 
+  | "Europe" 
+  | "Asia" 
+  | "South America" 
+  | "Africa" 
+  | "Australia" 
+  | "Global" 
+  | "Unknown";
 
 interface UrlData {
   id: string;
@@ -14,6 +37,7 @@ interface UrlData {
   clicks: number;
   lastClickedAt?: Date;
   category?: UrlCategory;
+  location?: UrlLocation;
   securityStatus?: {
     safe: boolean;
     checkedAt: Date;
@@ -27,7 +51,7 @@ interface UrlContextType {
   getOriginalUrl: (shortCode: string) => string | null;
   recordClick: (shortCode: string) => void;
   deleteUrl: (id: string) => void;
-  categorizeUrl: (id: string, category: UrlCategory) => void;
+  categorizeUrl: (id: string, category: UrlCategory, location?: UrlLocation) => void;
   checkUrlSafety: (url: string) => Promise<SecurityCheckResult[]>;
 }
 
@@ -42,13 +66,94 @@ export const useUrlShortener = () => {
 };
 
 const generateShortCode = () => {
-  // Generate a random 6-character alphanumeric code
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  // Generate a random 6-character alphanumeric code that doesn't include "lovableproject"
+  const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
   let result = '';
   for (let i = 0; i < 6; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return result;
+};
+
+// Dataset for domain categorization (simulating Kaggle dataset)
+const categoryData = {
+  // News sites
+  'news': 'News', 'cnn.com': 'News', 'nytimes.com': 'News', 'bbc.com': 'News', 'reuters.com': 'News',
+  'washingtonpost.com': 'News', 'theguardian.com': 'News', 'wsj.com': 'News', 'bloomberg.com': 'News',
+  
+  // Social Media
+  'facebook.com': 'Social Media', 'twitter.com': 'Social Media', 'instagram.com': 'Social Media',
+  'linkedin.com': 'Social Media', 'pinterest.com': 'Social Media', 'reddit.com': 'Social Media',
+  'tumblr.com': 'Social Media', 'tiktok.com': 'Social Media', 'snapchat.com': 'Social Media',
+  
+  // Shopping
+  'amazon.com': 'Shopping', 'ebay.com': 'Shopping', 'walmart.com': 'Shopping', 'etsy.com': 'Shopping',
+  'shopify.com': 'Shopping', 'bestbuy.com': 'Shopping', 'target.com': 'Shopping', 'shop': 'Shopping',
+  
+  // Tech
+  'github.com': 'Tech', 'stackoverflow.com': 'Tech', 'microsoft.com': 'Tech', 'apple.com': 'Tech',
+  'google.com': 'Tech', 'dev.to': 'Tech', 'techcrunch.com': 'Tech', 'wired.com': 'Tech', 
+  
+  // Entertainment
+  'youtube.com': 'Entertainment', 'netflix.com': 'Entertainment', 'hulu.com': 'Entertainment',
+  'spotify.com': 'Entertainment', 'twitch.tv': 'Entertainment', 'imdb.com': 'Entertainment',
+  
+  // Education
+  'edu': 'Education', 'coursera.org': 'Education', 'udemy.com': 'Education', 'edx.org': 'Education',
+  'khanacademy.org': 'Education', 'mit.edu': 'Education', 'harvard.edu': 'Education', 
+  'stanford.edu': 'Education', 'school': 'Education', 'university': 'Education', 'college': 'Education',
+  
+  // Business
+  'business': 'Business', 'corp': 'Business', 'inc': 'Business', 'company': 'Business',
+  'enterprise': 'Business', 'salesforce.com': 'Business', 'oracle.com': 'Business',
+  'sap.com': 'Business', 'hubspot.com': 'Business',
+  
+  // Travel
+  'travel': 'Travel', 'booking.com': 'Travel', 'expedia.com': 'Travel', 'airbnb.com': 'Travel',
+  'tripadvisor.com': 'Travel', 'hotels.com': 'Travel', 'kayak.com': 'Travel',
+  
+  // Health
+  'health': 'Health', 'webmd.com': 'Health', 'mayoclinic.org': 'Health', 'nih.gov': 'Health',
+  'who.int': 'Health', 'hospital': 'Health', 'medical': 'Health', 'healthcare': 'Health',
+  
+  // Government
+  'gov': 'Government', 'whitehouse.gov': 'Government', 'usa.gov': 'Government',
+  'un.org': 'Government', 'europa.eu': 'Government',
+  
+  // Finance
+  'finance': 'Finance', 'bank': 'Finance', 'invest': 'Finance', 'trading': 'Finance',
+  'nasdaq.com': 'Finance', 'nyse.com': 'Finance', 'coinbase.com': 'Finance',
+  'paypal.com': 'Finance', 'visa.com': 'Finance', 'mastercard.com': 'Finance',
+  
+  // Sports
+  'sports': 'Sports', 'espn.com': 'Sports', 'nba.com': 'Sports', 'nfl.com': 'Sports',
+  'mlb.com': 'Sports', 'fifa.com': 'Sports', 'olympic.org': 'Sports'
+};
+
+// Dataset for location mapping based on TLDs and common domains
+const locationData = {
+  // North America
+  'us': 'North America', 'ca': 'North America', 'mx': 'North America', 
+  'usa': 'North America', 'canada': 'North America', 'mexico': 'North America',
+  
+  // Europe
+  'uk': 'Europe', 'fr': 'Europe', 'de': 'Europe', 'it': 'Europe', 'es': 'Europe',
+  'nl': 'Europe', 'ch': 'Europe', 'se': 'Europe', 'no': 'Europe', 'fi': 'Europe',
+  'ru': 'Europe', 'pl': 'Europe', 'eu': 'Europe',
+  
+  // Asia
+  'cn': 'Asia', 'jp': 'Asia', 'kr': 'Asia', 'in': 'Asia', 'sg': 'Asia',
+  'hk': 'Asia', 'tw': 'Asia', 'th': 'Asia', 'vn': 'Asia', 'my': 'Asia',
+  
+  // South America
+  'br': 'South America', 'ar': 'South America', 'cl': 'South America', 'co': 'South America',
+  'pe': 'South America', 've': 'South America',
+  
+  // Africa
+  'za': 'Africa', 'ng': 'Africa', 'eg': 'Africa', 'ke': 'Africa', 'ma': 'Africa',
+  
+  // Australia/Oceania
+  'au': 'Australia', 'nz': 'Australia'
 };
 
 export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -112,13 +217,18 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
 
     const shortCode = generateShortCode();
+    
+    // Analyze URL for categorization and location detection
+    const { category, location } = analyzeUrlMetadata(originalUrl);
+    
     const newUrl: UrlData = {
       id: uuidv4(),
       originalUrl,
       shortCode,
       createdAt: new Date(),
       clicks: 0,
-      category: "Other", // Default category
+      category,
+      location,
       securityStatus: {
         safe: isSafe,
         checkedAt: new Date(),
@@ -127,9 +237,6 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     setUrls(prevUrls => [...prevUrls, newUrl]);
-    
-    // Attempt to categorize the URL
-    analyzeUrl(newUrl.id, originalUrl);
     
     toast.success("URL shortened successfully");
     return shortCode;
@@ -155,45 +262,96 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     toast.success("URL deleted successfully");
   };
 
-  const categorizeUrl = (id: string, category: UrlCategory) => {
+  const categorizeUrl = (id: string, category: UrlCategory, location?: UrlLocation) => {
     setUrls(prevUrls => 
       prevUrls.map(url => 
         url.id === id 
-          ? { ...url, category } 
+          ? { ...url, category, location: location || url.location } 
           : url
       )
     );
   };
 
-  const analyzeUrl = async (id: string, url: string) => {
+  const analyzeUrlMetadata = (url: string): { category: UrlCategory, location: UrlLocation } => {
     try {
-      const hostname = new URL(url).hostname;
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+      const domainParts = hostname.split('.');
+      const tld = domainParts[domainParts.length - 1]; // e.g., com, org, edu
+      const domain = domainParts[domainParts.length - 2]; // e.g., google, facebook
+      const fullDomain = domain + '.' + tld;
       
-      // Simple pattern-based classification
+      // Category detection - search through all parts of the URL
       let category: UrlCategory = "Other";
+      let foundCategory = false;
       
-      if (hostname.includes("news") || hostname.includes("nytimes") || hostname.includes("cnn") || hostname.includes("bbc")) {
-        category = "News";
-      } else if (hostname.includes("facebook") || hostname.includes("twitter") || hostname.includes("instagram") || hostname.includes("linkedin")) {
-        category = "Social Media";
-      } else if (hostname.includes("amazon") || hostname.includes("ebay") || hostname.includes("walmart") || hostname.includes("etsy") || hostname.includes("shop")) {
-        category = "Shopping";
-      } else if (hostname.includes("github") || hostname.includes("stackoverflow") || hostname.includes("dev") || hostname.includes("tech")) {
-        category = "Tech";
-      } else if (hostname.includes("youtube") || hostname.includes("netflix") || hostname.includes("hulu") || hostname.includes("spotify")) {
-        category = "Entertainment";
-      } else if (hostname.includes("edu") || hostname.includes("course") || hostname.includes("learn") || hostname.includes("academy")) {
-        category = "Education";
+      // Check full domain first (e.g., "github.com")
+      if (categoryData[fullDomain]) {
+        category = categoryData[fullDomain] as UrlCategory;
+        foundCategory = true;
       }
       
-      categorizeUrl(id, category);
+      // Check individual parts if no exact match
+      if (!foundCategory) {
+        for (const part of [...domainParts, ...urlObj.pathname.split('/')]) {
+          if (part && categoryData[part.toLowerCase()]) {
+            category = categoryData[part.toLowerCase()] as UrlCategory;
+            foundCategory = true;
+            break;
+          }
+        }
+      }
       
-      // Note: In a production app, we would call an actual AI service here
-      // For demo purposes, we're using a simple pattern matching approach
-      console.log(`Categorized ${url} as ${category}`);
+      // Check keyword matches in full domain + path if still no match
+      if (!foundCategory) {
+        const fullUrl = hostname + urlObj.pathname.toLowerCase();
+        for (const [keyword, cat] of Object.entries(categoryData)) {
+          if (fullUrl.includes(keyword)) {
+            category = cat as UrlCategory;
+            foundCategory = true;
+            break;
+          }
+        }
+      }
+      
+      // Location detection - primarily from TLD, domain name, or path components
+      let location: UrlLocation = "Unknown";
+      let foundLocation = false;
+      
+      // Check TLD for country code
+      if (locationData[tld]) {
+        location = locationData[tld] as UrlLocation;
+        foundLocation = true;
+      }
+      
+      // Check parts of domain and path for location hints if no TLD match
+      if (!foundLocation) {
+        for (const part of [...domainParts, ...urlObj.pathname.split('/')]) {
+          if (part && locationData[part.toLowerCase()]) {
+            location = locationData[part.toLowerCase()] as UrlLocation;
+            foundLocation = true;
+            break;
+          }
+        }
+      }
+      
+      // If domain is a global company or service, mark it as global
+      const globalDomains = [
+        'google', 'facebook', 'twitter', 'amazon', 'microsoft', 'apple', 
+        'netflix', 'youtube', 'github', 'wikipedia', 'linkedin', 'instagram'
+      ];
+      
+      if (!foundLocation && globalDomains.includes(domain)) {
+        location = "Global";
+      }
+      
+      console.log(`Categorized ${url} as ${category} in ${location}`);
+      
+      return { category, location };
       
     } catch (error) {
-      console.error("Error analyzing URL:", error);
+      console.error("Error analyzing URL metadata:", error);
+      return { category: "Other", location: "Unknown" };
     }
   };
 
