@@ -4,10 +4,11 @@ import { useUrlShortener } from "@/context/UrlShortenerContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy, Trash, Calendar, BarChart, CopyCheck } from "lucide-react";
+import { Copy, Trash, Calendar, BarChart, CopyCheck, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import CategoryBadge from "./CategoryBadge";
+import SecurityBadge from "./SecurityBadge";
 
 const UrlList: React.FC = () => {
   const { urls, deleteUrl } = useUrlShortener();
@@ -49,6 +50,7 @@ const UrlList: React.FC = () => {
                 <TableHead>Original URL</TableHead>
                 <TableHead>Short URL</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead><ShieldCheck size={16} className="mr-1 inline" /> Security</TableHead>
                 <TableHead><Calendar size={16} className="mr-1 inline" /> Created</TableHead>
                 <TableHead><BarChart size={16} className="mr-1 inline" /> Clicks</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -79,6 +81,9 @@ const UrlList: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <CategoryBadge category={url.category || "Other"} />
+                  </TableCell>
+                  <TableCell>
+                    <SecurityBadge securityStatus={url.securityStatus} />
                   </TableCell>
                   <TableCell>
                     {format(url.createdAt, 'MMM d, yyyy')}

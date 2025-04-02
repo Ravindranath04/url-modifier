@@ -5,14 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import { Copy, Link } from "lucide-react";
+import { Copy, Link, ShieldCheck, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SecurityCheckResult } from "@/services/urlSecurityService";
 
 const UrlForm: React.FC = () => {
   const [url, setUrl] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
-  const { addUrl } = useUrlShortener();
+  const [isChecking, setIsChecking] = useState(false);
+  const [securityResults, setSecurityResults] = useState<SecurityCheckResult[] | null>(null);
+  const { addUrl, checkUrlSafety } = useUrlShortener();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) {
       toast.error("Please enter a URL");
@@ -25,9 +29,24 @@ const UrlForm: React.FC = () => {
       urlToShorten = `https://${url}`;
     }
 
-    const shortCode = addUrl(urlToShorten);
-    if (shortCode) {
-      setGeneratedCode(shortCode);
+    setIsChecking(true);
+    setSecurityResults(null);
+    
+    try {
+      // Check URL safety first
+      const results = await checkUrlSafety(urlToShorten);
+      setSecurityResults(results);
+      
+      // Add URL if it's safe (the addUrl function will handle unsafe URLs)
+      const shortCode = await addUrl(urlToShorten);
+      if (shortCode) {
+        setGeneratedCode(shortCode);
+      }
+    } catch (error) {
+      console.error("Error processing URL:", error);
+      toast.error("Failed to process the URL");
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -36,6 +55,13 @@ const UrlForm: React.FC = () => {
     navigator.clipboard.writeText(shortUrl);
     toast.success("Copied to clipboard!");
   };
+
+  // Check if any security threats were found
+  const hasSecurity = securityResults !== null;
+  const isUrlSafe = hasSecurity && securityResults.every(result => result.safe);
+  const securityThreats = hasSecurity 
+    ? securityResults.flatMap(result => result.threats).filter(Boolean)
+    : [];
 
   return (
     <Card className="w-full">
@@ -57,9 +83,38 @@ const UrlForm: React.FC = () => {
                   className="pl-10"
                 />
               </div>
-              <Button type="submit">Shorten URL</Button>
+              <Button type="submit" disabled={isChecking}>
+                {isChecking ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Checking security...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Shorten & Check Security
+                  </>
+                )}
+              </Button>
             </div>
           </div>
+
+          {hasSecurity && !isUrlSafe && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTitle className="flex items-center">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Security Warning
+              </AlertTitle>
+              <AlertDescription>
+                <p>This URL may be unsafe. The following issues were detected:</p>
+                <ul className="list-disc list-inside mt-2">
+                  {securityThreats.map((threat, index) => (
+                    <li key={index}>{threat}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {generatedCode && (
             <div className="mt-4 p-4 bg-primary-50 rounded-md">

@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
+import { urlSecurityService, SecurityCheckResult } from "@/services/urlSecurityService";
 
 export type UrlCategory = "News" | "Social Media" | "Shopping" | "Tech" | "Entertainment" | "Education" | "Other";
 
@@ -13,15 +14,21 @@ interface UrlData {
   clicks: number;
   lastClickedAt?: Date;
   category?: UrlCategory;
+  securityStatus?: {
+    safe: boolean;
+    checkedAt: Date;
+    results: SecurityCheckResult[];
+  };
 }
 
 interface UrlContextType {
   urls: UrlData[];
-  addUrl: (originalUrl: string) => string;
+  addUrl: (originalUrl: string) => Promise<string | null>;
   getOriginalUrl: (shortCode: string) => string | null;
   recordClick: (shortCode: string) => void;
   deleteUrl: (id: string) => void;
   categorizeUrl: (id: string, category: UrlCategory) => void;
+  checkUrlSafety: (url: string) => Promise<SecurityCheckResult[]>;
 }
 
 const UrlContext = createContext<UrlContextType | undefined>(undefined);
@@ -53,7 +60,11 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return parsedUrls.map((url: any) => ({
           ...url,
           createdAt: new Date(url.createdAt),
-          lastClickedAt: url.lastClickedAt ? new Date(url.lastClickedAt) : undefined
+          lastClickedAt: url.lastClickedAt ? new Date(url.lastClickedAt) : undefined,
+          securityStatus: url.securityStatus ? {
+            ...url.securityStatus,
+            checkedAt: new Date(url.securityStatus.checkedAt)
+          } : undefined
         }));
       } catch (error) {
         console.error("Error parsing URLs from localStorage:", error);
@@ -68,13 +79,17 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     localStorage.setItem("shortenedUrls", JSON.stringify(urls));
   }, [urls]);
 
-  const addUrl = (originalUrl: string): string => {
+  const checkUrlSafety = async (url: string): Promise<SecurityCheckResult[]> => {
+    return await urlSecurityService.checkUrlSafety(url);
+  };
+
+  const addUrl = async (originalUrl: string): Promise<string | null> => {
     // Validate URL
     try {
       new URL(originalUrl);
     } catch (e) {
       toast.error("Please enter a valid URL");
-      return "";
+      return null;
     }
 
     // Check if URL already exists
@@ -84,6 +99,18 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return existingUrl.shortCode;
     }
 
+    // Check URL safety
+    const securityResults = await checkUrlSafety(originalUrl);
+    const isSafe = urlSecurityService.isUrlSafe(securityResults);
+    
+    if (!isSafe) {
+      const threats = urlSecurityService.getAllThreats(securityResults).filter(Boolean);
+      toast.error(`This URL may be unsafe: ${threats.join(", ")}`, {
+        duration: 5000,
+      });
+      return null;
+    }
+
     const shortCode = generateShortCode();
     const newUrl: UrlData = {
       id: uuidv4(),
@@ -91,7 +118,12 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
       shortCode,
       createdAt: new Date(),
       clicks: 0,
-      category: "Other" // Default category
+      category: "Other", // Default category
+      securityStatus: {
+        safe: isSafe,
+        checkedAt: new Date(),
+        results: securityResults
+      }
     };
 
     setUrls(prevUrls => [...prevUrls, newUrl]);
@@ -173,7 +205,8 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         getOriginalUrl, 
         recordClick, 
         deleteUrl,
-        categorizeUrl
+        categorizeUrl,
+        checkUrlSafety
       }}
     >
       {children}
