@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 
+export type UrlCategory = "News" | "Social Media" | "Shopping" | "Tech" | "Entertainment" | "Education" | "Other";
+
 interface UrlData {
   id: string;
   originalUrl: string;
@@ -10,6 +12,7 @@ interface UrlData {
   createdAt: Date;
   clicks: number;
   lastClickedAt?: Date;
+  category?: UrlCategory;
 }
 
 interface UrlContextType {
@@ -18,6 +21,7 @@ interface UrlContextType {
   getOriginalUrl: (shortCode: string) => string | null;
   recordClick: (shortCode: string) => void;
   deleteUrl: (id: string) => void;
+  categorizeUrl: (id: string, category: UrlCategory) => void;
 }
 
 const UrlContext = createContext<UrlContextType | undefined>(undefined);
@@ -86,10 +90,15 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
       originalUrl,
       shortCode,
       createdAt: new Date(),
-      clicks: 0
+      clicks: 0,
+      category: "Other" // Default category
     };
 
     setUrls(prevUrls => [...prevUrls, newUrl]);
+    
+    // Attempt to categorize the URL
+    analyzeUrl(newUrl.id, originalUrl);
+    
     toast.success("URL shortened successfully");
     return shortCode;
   };
@@ -114,6 +123,48 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     toast.success("URL deleted successfully");
   };
 
+  const categorizeUrl = (id: string, category: UrlCategory) => {
+    setUrls(prevUrls => 
+      prevUrls.map(url => 
+        url.id === id 
+          ? { ...url, category } 
+          : url
+      )
+    );
+  };
+
+  const analyzeUrl = async (id: string, url: string) => {
+    try {
+      const hostname = new URL(url).hostname;
+      
+      // Simple pattern-based classification
+      let category: UrlCategory = "Other";
+      
+      if (hostname.includes("news") || hostname.includes("nytimes") || hostname.includes("cnn") || hostname.includes("bbc")) {
+        category = "News";
+      } else if (hostname.includes("facebook") || hostname.includes("twitter") || hostname.includes("instagram") || hostname.includes("linkedin")) {
+        category = "Social Media";
+      } else if (hostname.includes("amazon") || hostname.includes("ebay") || hostname.includes("walmart") || hostname.includes("etsy") || hostname.includes("shop")) {
+        category = "Shopping";
+      } else if (hostname.includes("github") || hostname.includes("stackoverflow") || hostname.includes("dev") || hostname.includes("tech")) {
+        category = "Tech";
+      } else if (hostname.includes("youtube") || hostname.includes("netflix") || hostname.includes("hulu") || hostname.includes("spotify")) {
+        category = "Entertainment";
+      } else if (hostname.includes("edu") || hostname.includes("course") || hostname.includes("learn") || hostname.includes("academy")) {
+        category = "Education";
+      }
+      
+      categorizeUrl(id, category);
+      
+      // Note: In a production app, we would call an actual AI service here
+      // For demo purposes, we're using a simple pattern matching approach
+      console.log(`Categorized ${url} as ${category}`);
+      
+    } catch (error) {
+      console.error("Error analyzing URL:", error);
+    }
+  };
+
   return (
     <UrlContext.Provider 
       value={{ 
@@ -121,7 +172,8 @@ export const UrlShortenerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         addUrl, 
         getOriginalUrl, 
         recordClick, 
-        deleteUrl 
+        deleteUrl,
+        categorizeUrl
       }}
     >
       {children}
