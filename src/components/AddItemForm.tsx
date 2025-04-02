@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,7 +37,14 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onSuccess }) => {
   });
 
   const onSubmit = (data: FormData) => {
-    addItem(data);
+    const newItem: Omit<InventoryItem, "id" | "createdAt" | "updatedAt"> = {
+      name: data.name,
+      quantity: data.quantity,
+      category: data.category,
+      price: data.price
+    };
+    
+    addItem(newItem);
     form.reset();
     if (onSuccess) {
       onSuccess();
