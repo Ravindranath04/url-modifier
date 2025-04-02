@@ -15,8 +15,8 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <UrlShortenerProvider>
+    <UrlShortenerProvider>
+      <TooltipProvider delayDuration={0}>
         <Toaster />
         <Sonner />
         <Routes>
@@ -25,8 +25,8 @@ const App = () => (
           <Route path="/analytics" element={<Layout><Analytics /></Layout>} />
           <Route path="*" element={<Layout><NotFound /></Layout>} />
         </Routes>
-      </UrlShortenerProvider>
-    </TooltipProvider>
+      </TooltipProvider>
+    </UrlShortenerProvider>
   </QueryClientProvider>
 );
 
