@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, BarChart2 } from "lucide-react";
+import { Link as LinkIcon, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LayoutProps {
@@ -12,8 +12,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   
   const navItems = [
-    { name: "Dashboard", path: "/", icon: <LayoutDashboard className="mr-2 h-5 w-5" /> },
-    { name: "Inventory", path: "/inventory", icon: <Package className="mr-2 h-5 w-5" /> },
+    { name: "Dashboard", path: "/", icon: <LinkIcon className="mr-2 h-5 w-5" /> },
     { name: "Analytics", path: "/analytics", icon: <BarChart2 className="mr-2 h-5 w-5" /> },
   ];
 
@@ -22,7 +21,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Sidebar */}
       <div className="bg-primary-50 border-r border-gray-200 md:w-64 w-full">
         <div className="p-4">
-          <h1 className="text-xl font-bold text-primary">Inventory Manager</h1>
+          <h1 className="text-xl font-bold text-primary">URL Shortener</h1>
         </div>
         <nav className="mt-4">
           <ul className="space-y-1 px-2">

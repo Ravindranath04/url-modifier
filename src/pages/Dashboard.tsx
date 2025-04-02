@@ -1,84 +1,76 @@
 
-import React, { useMemo } from "react";
-import { Package, DollarSign, ArrowUp, AlertTriangle } from "lucide-react";
-import StatCard from "@/components/StatCard";
-import LowStockItems from "@/components/LowStockItems";
-import CategoryDistributionChart from "@/components/CategoryDistributionChart";
-import TopItems from "@/components/TopItems";
-import { useInventory } from "@/context/InventoryContext";
-import { LOW_STOCK_THRESHOLD } from "@/types/inventory";
+import React from "react";
+import UrlForm from "@/components/UrlForm";
+import UrlList from "@/components/UrlList";
+import { useUrlShortener } from "@/context/UrlShortenerContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, Calendar, Link } from "lucide-react";
 
 const Dashboard: React.FC = () => {
-  const { items } = useInventory();
-
-  const totalItems = useMemo(() => {
-    return items.reduce((sum, item) => sum + item.quantity, 0);
-  }, [items]);
-
-  const totalCategories = useMemo(() => {
-    return new Set(items.map(item => item.category)).size;
-  }, [items]);
-
-  const totalValue = useMemo(() => {
-    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  }, [items]);
-
-  const lowStockCount = useMemo(() => {
-    return items.filter(item => item.quantity <= LOW_STOCK_THRESHOLD).length;
-  }, [items]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const { urls } = useUrlShortener();
+  
+  const totalClicks = urls.reduce((sum, url) => sum + url.clicks, 0);
+  const totalUrls = urls.length;
+  const mostClicked = urls.length > 0 
+    ? urls.reduce((prev, current) => (prev.clicks > current.clicks) ? prev : current) 
+    : null;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">URL Shortener</h1>
         <p className="text-muted-foreground">
-          Overview of your inventory and key metrics
+          Shorten your URLs and track their performance
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Items"
-          value={totalItems}
-          icon={<Package className="h-4 w-4" />}
-          description="Total units in inventory"
-        />
-        <StatCard
-          title="Total Categories"
-          value={totalCategories}
-          icon={<ArrowUp className="h-4 w-4" />}
-          description="Number of categories"
-        />
-        <StatCard
-          title="Inventory Value"
-          value={formatCurrency(totalValue)}
-          icon={<DollarSign className="h-4 w-4" />}
-          description="Total value of inventory"
-        />
-        <StatCard
-          title="Low Stock Items"
-          value={lowStockCount}
-          icon={<AlertTriangle className="h-4 w-4" />}
-          description={`Items with quantity <= ${LOW_STOCK_THRESHOLD}`}
-          className={lowStockCount > 0 ? "border-destructive" : ""}
-        />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total URLs</CardTitle>
+            <Link className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalUrls}</div>
+            <p className="text-xs text-muted-foreground">
+              URLs shortened
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Clicks</CardTitle>
+            <BarChart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalClicks}</div>
+            <p className="text-xs text-muted-foreground">
+              Link redirects
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Most Popular URL</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {mostClicked ? (
+              <>
+                <div className="text-2xl font-bold">{mostClicked.clicks} clicks</div>
+                <p className="text-xs text-muted-foreground truncate">
+                  {mostClicked.originalUrl}
+                </p>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground">No data yet</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <CategoryDistributionChart />
-        <TopItems />
-      </div>
-
-      <LowStockItems />
+      <UrlForm />
+      <UrlList />
     </div>
   );
 };

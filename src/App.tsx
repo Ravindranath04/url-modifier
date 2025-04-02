@@ -4,11 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
-import { InventoryProvider } from "@/context/InventoryContext";
+import { UrlShortenerProvider } from "@/context/UrlShortenerContext";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
-import Inventory from "@/pages/Inventory";
 import Analytics from "@/pages/Analytics";
+import Redirect from "@/pages/Redirect";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,18 +16,16 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <InventoryProvider>
+      <UrlShortenerProvider>
         <Toaster />
         <Sonner />
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </InventoryProvider>
+        <Routes>
+          <Route path="/s/:shortCode" element={<Redirect />} />
+          <Route path="/" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/analytics" element={<Layout><Analytics /></Layout>} />
+          <Route path="*" element={<Layout><NotFound /></Layout>} />
+        </Routes>
+      </UrlShortenerProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
