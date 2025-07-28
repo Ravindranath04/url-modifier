@@ -1,19 +1,4 @@
-# Welcome to your Lovable project
-
-## Project info
-
-**URL**: https://lovable.dev/projects/28a1044c-79ae-420b-80d6-bf0faaa5f042
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/28a1044c-79ae-420b-80d6-bf0faaa5f042) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
+URL Modifier is a lightweight and developer-friendly tool to manipulate and customize URLs effortlessly. Whether you're building APIs, tracking UTM parameters, or testing different URL variants, this tool helps you add, update, remove, or extract query parameters from any URL with ease.
 **Use your preferred IDE**
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
@@ -62,11 +47,7 @@ This project is built with .
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/28a1044c-79ae-420b-80d6-bf0faaa5f042) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
+Simply open [Url-modifier](https://lovable.dev/projects/28a1044c-79ae-420b-80d6-bf0faaa5f042) and click on Share -> Publish.
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
